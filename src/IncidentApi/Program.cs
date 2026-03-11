@@ -35,6 +35,8 @@ builder.Services.AddCors(options => {
     options.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 // --- PIPELINE DE EJECUCIÓN (El orden aquí es vital) ---
@@ -68,5 +70,7 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "--> SQL Server: Fallo en la conexión inicial.");
     }
 }
+
+app.MapHealthChecks("/health");
 
 app.Run();

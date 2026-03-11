@@ -1,0 +1,29 @@
+name: .NET CI Backend
+
+# El CI se activará cuando hagas Push o Pull Request a la rama main
+on:
+  push:
+    branches: [ "main", "feature/*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restaurar dependencias
+      run: dotnet restore src/IncidentApi/IncidentApi.csproj
+
+    - name: Compilar
+      run: dotnet build src/IncidentApi/IncidentApi.csproj --no-restore
+
+    - name: Ejecutar Pruebas Unitarias (Requisito 10)
+      run: dotnet test tests/IncidentApi.Tests/IncidentApi.Tests.csproj --no-build --verbosity normal
