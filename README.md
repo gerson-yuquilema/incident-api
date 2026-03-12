@@ -11,7 +11,13 @@ API robusta para la gestión de tickets de incidentes, diseñada con un enfoque 
 ## 🏗️ Decisiones de Arquitectura
 - **Estrategia Políglota:** SQL Server garantiza la integridad referencial para los tickets, mientras que MongoDB actúa como un almacén de eventos (*Event Store*) para auditoría, permitiendo un historial flexible y de alto rendimiento.
 - **Resiliencia:** Implementación de políticas de reintento (`EnableRetryOnFailure`) para la conexión a SQL Server, asegurando la estabilidad en entornos de contenedores.
-- **Salud del Sistema:** Endpoint de `/health` implementado para monitoreo de infraestructura (Bonus 11).
+- **Salud del Sistema:** Endpoint de `/health` implementado para monitoreo de infraestructura (Bonus).
+
+## 🔐 Variables de Entorno Necesarias
+Para ejecutar este proyecto, se requiere configurar las siguientes variables (inyectadas automáticamente vía Docker Compose):
+- `ConnectionStrings__SqlServer`: Cadena de conexión a la base de datos SQL Server.
+- `ConnectionStrings__MongoDb`: Cadena de conexión al clúster de MongoDB.
+- `MockService__BaseUrl`: URL base del servicio simulado de Catálogo de Servicios (Wiremock).
 
 ## 🚀 Cómo Correr (Pasos Exactos)
 1. Asegurar que el SDK de .NET 8 esté instalado.
@@ -30,12 +36,26 @@ API robusta para la gestión de tickets de incidentes, diseñada con un enfoque 
 curl -X POST http://localhost:5000/api/incidents \
 -H "Content-Type: application/json" \
 -d '{"title":"Falla de Red","description":"Error 500 en Login","severity":"HIGH","serviceId":"auth-api"}'
+```
 
-
-Listar con Filtros y Paginación 
-
+### Listar con Filtros y Paginación
+```bash
 curl "http://localhost:5000/api/incidents?status=OPEN&severity=HIGH&page=1&pageSize=10"
+```
 
-Ver Detalle y Timeline NoSQL (GET)
-
+### Ver Detalle y Timeline NoSQL (GET)
+```bash
 curl http://localhost:5000/api/incidents/{id}
+```
+
+### Cambiar Estado (PATCH)
+```bash
+curl -X PATCH http://localhost:5000/api/incidents/{id}/status \
+-H "Content-Type: application/json" \
+-d '{"status": "RESOLVED"}'
+```
+
+### 📝 Pendientes (Roadmap)
+Caché: Implementación de Redis para el Service Catalog con TTL.
+
+Seguridad: Protección de endpoints administrativos utilizando tokens JWT.
