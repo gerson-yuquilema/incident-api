@@ -1,11 +1,61 @@
-# ⚙️ Incident API (.NET 8)
-### Variables de Entorno
-- `ConnectionStrings__SqlServer`: URI de SQL Server.
-- `ConnectionStrings__MongoDb`: URI de MongoDB.
+# ⚙️ Incident Management API (.NET 8)
 
-### Cómo Probar Endpoints (curl)
-- **Listar:** `curl http://localhost:5000/api/incidents?status=OPEN`
-- **Crear:** `curl -X POST http://localhost:5000/api/incidents -H "Content-Type: application/json" -d '{"title":"Error","severity":"HIGH","serviceId":"api-1"}'`
+API robusta para la gestión de tickets de incidentes, diseñada con un enfoque de persistencia políglota y alta disponibilidad.
 
-### Pruebas
-Ejecutar: `dotnet test`
+## 🛠️ Stack Tecnológico
+- **Framework:** .NET 8 (ASP.NET Core).
+- **Persistencia Transaccional:** SQL Server (Entity Framework Core).
+- **Persistencia de Eventos:** MongoDB (Auditoría inmutable).
+- **Integraciones:** Consumo de Catálogo de Servicios externos mediante HttpClient y Wiremock.
+
+## 🏗️ Decisiones de Arquitectura
+- **Estrategia Políglota:** SQL Server garantiza la integridad referencial para los tickets, mientras que MongoDB actúa como un almacén de eventos (*Event Store*) para auditoría, permitiendo un historial flexible y de alto rendimiento.
+- **Resiliencia:** Implementación de políticas de reintento (`EnableRetryOnFailure`) para la conexión a SQL Server, asegurando la estabilidad en entornos de contenedores.
+- **Salud del Sistema:** Endpoint de `/health` implementado para monitoreo de infraestructura (Bonus).
+
+## 🔐 Variables de Entorno Necesarias
+Para ejecutar este proyecto, se requiere configurar las siguientes variables (inyectadas automáticamente vía Docker Compose):
+- `ConnectionStrings__SqlServer`: Cadena de conexión a la base de datos SQL Server.
+- `ConnectionStrings__MongoDb`: Cadena de conexión al clúster de MongoDB.
+- `MockService__BaseUrl`: URL base del servicio simulado de Catálogo de Servicios (Wiremock).
+
+## 🚀 Cómo Correr (Pasos Exactos)
+1. Asegurar que el SDK de .NET 8 esté instalado.
+2. Restaurar dependencias: `dotnet restore`
+3. Ejecutar: `dotnet run --project src/IncidentApi/IncidentApi.csproj`
+4. Documentación interactiva (Swagger): `http://localhost:5000/`
+
+## 🧪 Pruebas y Calidad
+- **Unit Tests:** Ejecutar `dotnet test` para validar la lógica de negocio y modelos.
+- **CI/CD:** Integración continua mediante **GitHub Actions** que valida compilación y tests en cada Pull Request.
+
+## 📡 Cómo Probar Endpoints (curl)
+
+### Crear Incidente (POST)
+```bash
+curl -X POST http://localhost:5000/api/incidents \
+-H "Content-Type: application/json" \
+-d '{"title":"Falla de Red","description":"Error 500 en Login","severity":"HIGH","serviceId":"auth-api"}'
+```
+
+### Listar con Filtros y Paginación
+```bash
+curl "http://localhost:5000/api/incidents?status=OPEN&severity=HIGH&page=1&pageSize=10"
+```
+
+### Ver Detalle y Timeline NoSQL (GET)
+```bash
+curl http://localhost:5000/api/incidents/{id}
+```
+
+### Cambiar Estado (PATCH)
+```bash
+curl -X PATCH http://localhost:5000/api/incidents/{id}/status \
+-H "Content-Type: application/json" \
+-d '{"status": "RESOLVED"}'
+```
+
+### 📝 Pendientes (Roadmap)
+Caché: Implementación de Redis para el Service Catalog con TTL.
+
+Seguridad: Protección de endpoints administrativos utilizando tokens JWT.
